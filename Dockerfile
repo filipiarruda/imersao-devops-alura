@@ -1,19 +1,20 @@
-FROM python:3.13.4-alpine3.22
+FROM python:3.10 as builder
 
-# Define o diretório de trabalho dentro do contêiner
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia o arquivo de requisitos e instala as dependências
-# Usamos --no-cache-dir para evitar o cache do pip, reduzindo o tamanho da imagem
+# Cria um ambiente virtual para isolar as dependências
+RUN python -m venv .
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copia o arquivo de requisitos e instala as dependências no venv
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante do código da aplicação para o diretório de trabalho
 COPY . .
 
-# Expõe a porta que a aplicação FastAPI irá rodar (padrão é 8000)
+# Expõe a porta que a aplicação irá rodar
 EXPOSE 8000
 
-# Comando para rodar a aplicação usando uvicorn
-# O host 0.0.0.0 permite que a aplicação seja acessível externamente ao contêiner
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000",  "--reload"]
+# Comando para iniciar a aplicação com um servidor WSGI de produção (Gunicorn)
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
